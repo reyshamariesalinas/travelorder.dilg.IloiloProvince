@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DILG Travel Order System</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+  .app{display:flex;flex-direction:column;min-height:100vh}
+  
+  /* NAV */
+  nav{background:#1a237e;color:#fff;padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:56px;position:sticky;top:0;z-index:100}
+  nav .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:.3px}
+  nav .logo-circle{width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1a237e;font-weight:900;font-size:11px}
+  nav .tabs{display:flex;gap:4px;margin-left:auto}
+  nav .tab{background:transparent;border:none;color:rgba(255,255,255,.7);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s}
+  nav .tab:hover{background:rgba(255,255,255,.1);color:#fff}
+  nav .tab.active{background:rgba(255,255,255,.15);color:#fff}
+
+  /* MAIN */
+  main{flex:1;padding:1.5rem;max-width:1100px;margin:0 auto;width:100%}
+
+  /* SECTION */
+  .section{display:none}
+  .section.active{display:block}
+
+  /* CARDS */
+  .card{background:#fff;border-radius:12px;border:0.5px solid #dde1ea;padding:1.5rem;margin-bottom:1.25rem}
+  .card-title{font-size:14px;font-weight:600;color:#1a237e;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:0.5px solid #eee;display:flex;align-items:center;gap:8px}
+  
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .form-group{display:flex;flex-direction:column;gap:5px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.4px}
+  input,select,textarea{border:0.5px solid #ccc;border-radius:8px;padding:9px 12px;font-size:14px;color:#1a1a2e;background:#fff;outline:none;transition:border .2s;width:100%}
+  input:focus,select:focus,textarea:focus{border-color:#1a237e}
+  textarea{resize:vertical;min-height:70px}
+
+  /* BUTTONS */
+  .btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:#1a237e;color:#fff}
+  .btn-primary:hover{background:#283593}
+  .btn-outline{background:#fff;color:#1a237e;border:1px solid #1a237e}
+  .btn-outline:hover{background:#e8eaf6}
+  .btn-success{background:#2e7d32;color:#fff}
+  .btn-success:hover{background:#388e3c}
+  .btn-danger{background:#c62828;color:#fff}
+  .btn-danger:hover{background:#d32f2f}
+  .btn-sm{padding:5px 12px;font-size:12px}
+  .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
+
+  /* STATUS BADGES */
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .badge-pending{background:#fff3e0;color:#e65100}
+  .badge-approved{background:#e8f5e9;color:#1b5e20}
+  .badge-completed{background:#e3f2fd;color:#0d47a1}
+  .badge-rejected{background:#ffebee;color:#b71c1c}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#f5f6fa;color:#555;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px 12px;text-align:left;border-bottom:1px solid #eee}
+  td{padding:10px 12px;border-bottom:0.5px solid #f0f0f0;color:#1a1a2e;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f9faff}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.25rem}
+  .stat-card{background:#fff;border-radius:10px;border:0.5px solid #dde1ea;padding:1rem;text-align:center}
+  .stat-num{font-size:28px;font-weight:700;color:#1a237e}
+  .stat-label{font-size:11px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+
+  /* PRINT PREVIEW */
+  .print-preview{background:#fff;border:1px solid #ccc;border-radius:8px;padding:2rem;font-family:Times New Roman,serif;font-size:12px;color:#000;max-width:720px;margin:0 auto}
+  .print-header{text-align:center;margin-bottom:1rem}
+  .print-header .agency{font-size:10px;color:#333}
+  .print-header .province{font-size:16px;font-weight:700;margin:.2rem 0}
+  .print-header .address{font-size:10px}
+  .print-header .doc-title{font-size:15px;font-weight:700;letter-spacing:2px;margin:1rem 0 .2rem;text-transform:uppercase}
+  .print-header .doc-num{font-size:12px;font-weight:600}
+  .print-date{text-align:right;font-size:11px;margin-bottom:.5rem}
+  .print-field-row{display:flex;gap:2rem;margin:.6rem 0;align-items:flex-end}
+  .print-field{flex:1}
+  .print-field-label{font-size:10px;color:#444;margin-bottom:2px}
+  .print-field-value{border-bottom:1px solid #000;padding-bottom:2px;min-height:20px;font-size:12px;white-space:pre-wrap;word-break:break-word}
+  .print-field-full{margin:.6rem 0}
+  .print-sigs{display:flex;justify-content:space-between;margin-top:2rem;gap:2rem}
+  .print-sig{flex:1}
+  .print-sig-line{border-bottom:1px solid #000;padding-bottom:2px;min-height:30px;font-size:12px}
+  .print-sig-label{font-size:10px;color:#444;margin-top:2px}
+  .print-divider{border:none;border-top:2px solid #000;margin:1.5rem 0}
+  .dilg-logo{font-size:36px;margin-bottom:.5rem}
+
+  /* SEARCH & FILTER */
+  .filter-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+  .filter-row input,.filter-row select{max-width:220px}
+
+  /* MODAL OVERLAY */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:1.5rem;max-width:440px;width:90%;max-height:85vh;overflow-y:auto}
+  .modal h3{font-size:16px;font-weight:700;color:#1a237e;margin-bottom:1rem}
+  .modal-row{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a237e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:300;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateY(0)}
+
+  /* PRINT ONLY */
+  @media print{
+    nav,.no-print{display:none!important}
+    body{background:#fff}
+    .print-preview{border:none;padding:0;max-width:100%}
+    .print-divider{page-break-before:always}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<nav>
+  <div class="logo">
+    <div class="logo-circle">DILG</div>
+    Travel Order System — Province of Iloilo
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('request')">📝 New Request</button>
+    <button class="tab" onclick="showSection('admin')">🗂 Admin</button>
+    <button class="tab" onclick="showSection('tracking')">📊 Tracking</button>
+    <button class="tab" onclick="showSection('search')">🔍 Search</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===== REQUEST FORM ===== -->
+<div id="sec-request" class="section active">
+  <div class="card">
+    <div class="card-title">📝 Travel Order Request Form</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Name of Personnel</label>
+        <input type="text" id="f-name" placeholder="e.g. Juan Dela Cruz">
+      </div>
+      <div class="form-group">
+        <label>Designation / Position</label>
+        <input type="text" id="f-designation" placeholder="e.g. Administrative Officer II">
+      </div>
+      <div class="form-group">
+        <label>Date and Time of Departure</label>
+        <input type="datetime-local" id="f-departure">
+      </div>
+      <div class="form-group">
+        <label>Expected Date of Return</label>
+        <input type="datetime-local" id="f-return">
+      </div>
+      <div class="form-group">
+        <label>Dates of Travel</label>
+        <input type="text" id="f-dates" placeholder="e.g. June 10–12, 2026">
+      </div>
+      <div class="form-group">
+        <label>Source of Funds</label>
+        <input type="text" id="f-funds" placeholder="e.g. MOOE / GAA">
+      </div>
+      <div class="form-group full">
+        <label>Place to be Visited</label>
+        <input type="text" id="f-place" placeholder="e.g. Manila, Metro Manila">
+      </div>
+      <div class="form-group full">
+        <label>Estimated Expenses</label>
+        <input type="text" id="f-expenses" placeholder="e.g. ₱5,000.00 (Transportation + Accommodation)">
+      </div>
+      <div class="form-group full">
+        <label>Special Instructions</label>
+        <textarea id="f-instructions" placeholder="(Optional) Any special instructions..."></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Purpose of Travel</label>
+        <textarea id="f-purpose" placeholder="Describe the purpose of travel..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Recommending Approval (Name)</label>
+        <input type="text" id="f-recommender" placeholder="e.g. Maria Santos">
+      </div>
+      <div class="form-group">
+        <label>Approved By (Name)</label>
+        <input type="text" id="f-approver" placeholder="e.g. Pedro Reyes">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="submitRequest()">📤 Submit Request</button>
+      <button class="btn btn-outline" onclick="previewForm()">👁 Preview Form</button>
+      <button class="btn btn-outline" onclick="clearForm()">🗑 Clear</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW AREA -->
+  <div id="preview-area" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem" class="no-print">
+      <strong style="color:#1a237e;font-size:14px">📄 Print Preview</strong>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('preview-area').style.display='none'">✕ Close</button>
+      </div>
+    </div>
+    <div id="print-output"></div>
+  </div>
+</div>
+
+<!-- ===== ADMIN ===== -->
+<div id="sec-admin" class="section">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Requests</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-pending" style="color:#e65100">0</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-approved" style="color:#2e7d32">0</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-completed" style="color:#1565c0">0</div><div class="stat-label">Completed</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🗂 Travel Order Requests — Raw Data</div>
+    <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap" class="no-print">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table id="admin-table">
+        <thead>
+          <tr>
+            <th>TO No.</th><th>Name</th><th>Designation</th><th>Dates of Travel</th><th>Destination</th><th>Purpose</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRACKING ===== -->
+<div id="sec-tracking" class="section">
+  <div class="card">
+    <div class="card-title">📊 Status Tracking</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>TO No.</th><th>Date Requested</th><th>Date of Travel</th><th>Destination</th><th>Purpose</th><th>Status</th></tr>
+        </thead>
+        <tbody id="tracking-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">✅ Completed Travel Orders</div>
+    <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap" class="no-print">
+      <select id="month-filter" onchange="renderCompleted()" style="max-width:160px">
+        <option value="">All Months</option>
+        <option>January</option><option>February</option><option>March</option>
+        <option>April</option><option>May</option><option>June</option>
+        <option>July</option><option>August</option><option>September</option>
+        <option>October</option><option>November</option><option>December</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportCompletedCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>TO No.</th><th>Name</th><th>Date Requested</th><th>Date of Travel</th><th>Purpose</th><th>Destination</th><th>File/Notes</th></tr>
+        </thead>
+        <tbody id="completed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEARCH ===== -->
+<div id="sec-search" class="section">
+  <div class="card">
+    <div class="card-title">🔍 Search Travel Orders</div>
+    <div class="filter-row">
+      <input type="text" id="search-name" placeholder="Search by name..." oninput="renderSearch()">
+      <input type="date" id="search-date-from" onchange="renderSearch()">
+      <span style="font-size:13px;color:#888">to</span>
+      <input type="date" id="search-date-to" onchange="renderSearch()">
+      <select id="search-status" onchange="renderSearch()">
+        <option value="">All Statuses</option>
+        <option>Pending</option><option>Approved</option><option>Completed</option><option>Rejected</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>TO No.</th><th>Name</th><th>Designation</th><th>Date of Travel</th><th>Destination</th><th>Purpose</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="search-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- TO NUMBER MODAL -->
+<div class="modal-bg" id="to-modal">
+  <div class="modal">
+    <h3>Assign Travel Order Number</h3>
+    <div class="form-group" style="margin-bottom:.75rem">
+      <label>TO Number (e.g. 2026-015A)</label>
+      <input type="text" id="modal-to-num" placeholder="2026-" oninput="validateTONum()">
+      <span id="to-num-err" style="color:#c62828;font-size:11px;display:none">Format: 2026-###A (e.g. 2026-015A)</span>
+    </div>
+    <div class="form-group" style="margin-bottom:.75rem">
+      <label>Update Status</label>
+      <select id="modal-status">
+        <option>Pending</option>
+        <option>Approved</option>
+        <option>Completed</option>
+        <option>Rejected</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Notes / File Location</label>
+      <textarea id="modal-notes" placeholder="Optional notes or file path..." style="min-height:60px"></textarea>
+    </div>
+    <div class="modal-row">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVE CONFIRM MODAL -->
+<div class="modal-bg" id="approve-modal">
+  <div class="modal">
+    <h3>Approve Travel Order</h3>
+    <p style="font-size:13px;color:#555;margin-bottom:1rem">This will mark the travel order as <strong>Approved</strong> and notify the requester.</p>
+    <div class="form-group">
+      <label>Approver e-Signature / Name</label>
+      <input type="text" id="esig-input" placeholder="Type approver full name as e-signature">
+    </div>
+    <div class="modal-row">
+      <button class="btn btn-outline" onclick="document.getElementById('approve-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-success" onclick="confirmApprove()">✔ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let DB = JSON.parse(localStorage.getItem('dilg_to_db') || '[]');
+let editingIdx = null;
+let approvingIdx = null;
+
+function save(){localStorage.setItem('dilg_to_db',JSON.stringify(DB))}
+
+function toast(msg,dur=2800){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='admin')renderAdmin();
+  if(id==='tracking')renderTracking();
+  if(id==='search')renderSearch();
+}
+
+function getVal(id){return document.getElementById(id).value.trim()}
+
+function submitRequest(){
+  const name=getVal('f-name');
+  if(!name){toast('⚠ Please enter the personnel name.');return}
+  const rec={
+    id:'REQ-'+Date.now(),
+    toNum:'',
+    name,
+    designation:getVal('f-designation'),
+    departure:getVal('f-departure'),
+    returnDate:getVal('f-return'),
+    travelDates:getVal('f-dates'),
+    funds:getVal('f-funds'),
+    place:getVal('f-place'),
+    expenses:getVal('f-expenses'),
+    instructions:getVal('f-instructions'),
+    purpose:getVal('f-purpose'),
+    recommender:getVal('f-recommender'),
+    approver:getVal('f-approver'),
+    status:'Pending',
+    esig:'',
+    notes:'',
+    dateRequested:new Date().toISOString(),
+    month:new Date().toLocaleString('default',{month:'long'})
+  };
+  DB.unshift(rec);save();
+  toast('✅ Travel order request submitted!');
+  clearForm();
+}
+
+function clearForm(){
+  ['f-name','f-designation','f-departure','f-return','f-dates','f-funds','f-place','f-expenses','f-instructions','f-purpose','f-recommender','f-approver'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('preview-area').style.display='none';
+}
+
+function previewForm(){
+  const d={
+    name:getVal('f-name'),
+    designation:getVal('f-designation'),
+    departure:getVal('f-departure'),
+    returnDate:getVal('f-return'),
+    travelDates:getVal('f-dates'),
+    funds:getVal('f-funds'),
+    place:getVal('f-place'),
+    expenses:getVal('f-expenses'),
+    instructions:getVal('f-instructions'),
+    purpose:getVal('f-purpose'),
+    recommender:getVal('f-recommender'),
+    approver:getVal('f-approver'),
+    toNum:'',
+    esig:''
+  };
+  document.getElementById('print-output').innerHTML=buildPrintHTML(d);
+  document.getElementById('preview-area').style.display='block';
+  document.getElementById('preview-area').scrollIntoView({behavior:'smooth'});
+}
+
+function buildPrintHTML(d){
+  const fmtDT=v=>{if(!v)return'';try{const dt=new Date(v);return dt.toLocaleString('en-PH',{month:'long',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}catch{return v}};
+  const half=(label,val)=>`<div class="print-field"><div class="print-field-label">${label}</div><div class="print-field-value">${val||'&nbsp;'}</div></div>`;
+  const full=(label,val)=>`<div class="print-field-full"><div class="print-field-label">${label}</div><div class="print-field-value">${val||'&nbsp;'}</div></div>`;
+  const header=`
+    <div class="print-header">
+      <div class="dilg-logo">🏛</div>
+      <div class="agency">Republic of the Philippines<br>Department of the Interior and Local Government</div>
+      <div class="province">Province of Iloilo</div>
+      <div class="address">P. Aquino Avenue, Fort San Pedro, Iloilo City</div>
+      <div class="doc-title">Travel Order</div>
+      <div class="doc-num">No. ${d.toNum||'2026-_____'}</div>
+    </div>
+    <div class="print-date">Date: ${new Date().toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'})}</div>`;
+  const body=`
+    <div class="print-field-row">${half('Name',d.name)}${half('Designation',d.designation)}</div>
+    <div class="print-field-row">${half('Date and Time of Departure',fmtDT(d.departure))}${half('Expected Date of Return',fmtDT(d.returnDate))}</div>
+    <div class="print-field-row">${half('Dates of Travel',d.travelDates)}${half('Source of Funds',d.funds)}</div>
+    ${full('Place to be Visited',d.place)}
+    ${full('Estimated Expenses',d.expenses)}
+    ${full('Special Instructions',d.instructions)}
+    ${full('Purpose',d.purpose)}
+    <div class="print-sigs">
+      <div class="print-sig">
+        <div class="print-sig-label">Recommending Approval:</div>
+        <div class="print-sig-line">${d.recommender||'&nbsp;'}</div>
+      </div>
+      <div class="print-sig">
+        <div class="print-sig-label">Approved By:</div>
+        <div class="print-sig-line">${d.esig||d.approver||'&nbsp;'}</div>
+      </div>
+    </div>`;
+  return `<div class="print-preview">${header}${body}<hr class="print-divider">${header}${body}</div>`;
+}
+
+/* ---- ADMIN ---- */
+function renderAdmin(){
+  const tbody=document.getElementById('admin-tbody');
+  const statusMap={'Pending':'badge-pending','Approved':'badge-approved','Completed':'badge-completed','Rejected':'badge-rejected'};
+  tbody.innerHTML=DB.length===0?`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem">No requests yet.</td></tr>`
+    :DB.map((r,i)=>`<tr>
+      <td><strong>${r.toNum||'<span style="color:#bbb">—</span>'}</strong></td>
+      <td>${r.name}</td>
+      <td style="font-size:12px;color:#555">${r.designation}</td>
+      <td>${r.travelDates}</td>
+      <td>${r.place}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.purpose}">${r.purpose}</td>
+      <td><span class="badge ${statusMap[r.status]||'badge-pending'}">${r.status}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="openTOModal(${i})">✏ TO#</button>
+          <button class="btn btn-success btn-sm" onclick="openApproveModal(${i})">✔</button>
+          <button class="btn btn-primary btn-sm" onclick="viewPrint(${i})">🖨</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRec(${i})">✕</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('stat-total').textContent=DB.length;
+  document.getElementById('stat-pending').textContent=DB.filter(r=>r.status==='Pending').length;
+  document.getElementById('stat-approved').textContent=DB.filter(r=>r.status==='Approved').length;
+  document.getElementById('stat-completed').textContent=DB.filter(r=>r.status==='Completed').length;
+}
+
+function openTOModal(i){
+  editingIdx=i;
+  document.getElementById('modal-to-num').value=DB[i].toNum||'';
+  document.getElementById('modal-status').value=DB[i].status;
+  document.getElementById('modal-notes').value=DB[i].notes||'';
+  document.getElementById('to-num-err').style.display='none';
+  document.getElementById('to-modal').classList.add('open');
+}
+
+function validateTONum(){
+  const v=document.getElementById('modal-to-num').value;
+  const ok=/^\d{4}-\d{3}[A-Za-z]?$/.test(v)||v==='';
+  document.getElementById('to-num-err').style.display=ok?'none':'block';
+}
+
+function saveModal(){
+  const num=document.getElementById('modal-to-num').value.trim();
+  if(num&&!/^\d{4}-\d{3}[A-Za-z]?$/.test(num)){toast('⚠ Invalid TO number format.');return}
+  DB[editingIdx].toNum=num;
+  DB[editingIdx].status=document.getElementById('modal-status').value;
+  DB[editingIdx].notes=document.getElementById('modal-notes').value.trim();
+  save();renderAdmin();renderTracking();
+  closeModal();toast('✅ Travel order updated!');
+}
+
+function closeModal(){document.getElementById('to-modal').classList.remove('open')}
+
+function openApproveModal(i){
+  approvingIdx=i;
+  document.getElementById('esig-input').value=DB[i].approver||'';
+  document.getElementById('approve-modal').classList.add('open');
+}
+
+function confirmApprove(){
+  const esig=document.getElementById('esig-input').value.trim();
+  if(!esig){toast('⚠ Please enter approver name.');return}
+  DB[approvingIdx].status='Approved';
+  DB[approvingIdx].esig=esig;
+  save();renderAdmin();
+  document.getElementById('approve-modal').classList.remove('open');
+  toast('✅ Approved! E-signature recorded.');
+}
+
+function viewPrint(i){
+  document.getElementById('print-output').innerHTML=buildPrintHTML(DB[i]);
+  document.getElementById('preview-area').style.display='block';
+  showSection('request');
+  document.querySelectorAll('nav .tab')[0].classList.add('active');
+  document.querySelectorAll('nav .tab').forEach((t,idx)=>{if(idx!==0)t.classList.remove('active')});
+  setTimeout(()=>document.getElementById('preview-area').scrollIntoView({behavior:'smooth'}),100);
+}
+
+function deleteRec(i){
+  if(!confirm('Delete this travel order request?'))return;
+  DB.splice(i,1);save();renderAdmin();toast('🗑 Record deleted.');
+}
+
+/* ---- TRACKING ---- */
+function renderTracking(){
+  const statusMap={'Pending':'badge-pending','Approved':'badge-approved','Completed':'badge-completed','Rejected':'badge-rejected'};
+  const statusLabel={'Pending':'📧 Email Request Sent','Approved':'✅ Approve Email Received','Completed':'✅ Approve Email Received','Rejected':'❌ Rejected'};
+  document.getElementById('tracking-tbody').innerHTML=DB.length===0
+    ?`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:2rem">No records.</td></tr>`
+    :DB.map(r=>`<tr>
+      <td>${r.name}</td>
+      <td>${r.toNum||'—'}</td>
+      <td style="font-size:12px">${new Date(r.dateRequested).toLocaleDateString('en-PH')}</td>
+      <td>${r.travelDates}</td>
+      <td>${r.place}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.purpose}</td>
+      <td><span class="badge ${statusMap[r.status]}">${statusLabel[r.status]||r.status}</span></td>
+    </tr>`).join('');
+  renderCompleted();
+}
+
+function renderCompleted(){
+  const month=document.getElementById('month-filter').value;
+  const rows=DB.filter(r=>r.status==='Completed'&&(!month||r.month===month));
+  document.getElementById('completed-tbody').innerHTML=rows.length===0
+    ?`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:2rem">No completed records${month?' for '+month:''}.</td></tr>`
+    :rows.map(r=>`<tr>
+      <td><strong>${r.toNum||'—'}</strong></td>
+      <td>${r.name}</td>
+      <td style="font-size:12px">${new Date(r.dateRequested).toLocaleDateString('en-PH')}</td>
+      <td>${r.travelDates}</td>
+      <td>${r.purpose}</td>
+      <td>${r.place}</td>
+      <td style="font-size:12px;color:#555">${r.notes||'—'}</td>
+    </tr>`).join('');
+}
+
+/* ---- SEARCH ---- */
+function renderSearch(){
+  const q=document.getElementById('search-name').value.toLowerCase();
+  const df=document.getElementById('search-date-from').value;
+  const dt=document.getElementById('search-date-to').value;
+  const st=document.getElementById('search-status').value;
+  const statusMap={'Pending':'badge-pending','Approved':'badge-approved','Completed':'badge-completed','Rejected':'badge-rejected'};
+  const rows=DB.filter(r=>{
+    if(q&&!r.name.toLowerCase().includes(q))return false;
+    if(st&&r.status!==st)return false;
+    return true;
+  });
+  document.getElementById('search-tbody').innerHTML=rows.length===0
+    ?`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem">No results found.</td></tr>`
+    :rows.map((r,i)=>`<tr>
+      <td>${r.toNum||'—'}</td>
+      <td>${r.name}</td>
+      <td style="font-size:12px;color:#555">${r.designation}</td>
+      <td>${r.travelDates}</td>
+      <td>${r.place}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.purpose}</td>
+      <td><span class="badge ${statusMap[r.status]||'badge-pending'}">${r.status}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="viewPrint(${DB.indexOf(r)})">🖨</button></td>
+    </tr>`).join('');
+}
+
+/* ---- CSV EXPORT ---- */
+function toCSV(arr,cols){
+  const esc=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+  const header=cols.map(c=>esc(c.label)).join(',');
+  const rows=arr.map(r=>cols.map(c=>esc(r[c.key])).join(','));
+  return [header,...rows].join('\n');
+}
+function download(csv,name){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=name;a.click();
+}
+function exportCSV(){
+  const cols=[
+    {key:'toNum',label:'TO Number'},{key:'name',label:'Name'},{key:'designation',label:'Designation'},
+    {key:'travelDates',label:'Dates of Travel'},{key:'departure',label:'Departure'},{key:'returnDate',label:'Return'},
+    {key:'place',label:'Destination'},{key:'funds',label:'Source of Funds'},{key:'expenses',label:'Estimated Expenses'},
+    {key:'purpose',label:'Purpose'},{key:'status',label:'Status'},{key:'dateRequested',label:'Date Requested'}
+  ];
+  download(toCSV(DB,cols),'travel_orders_raw.csv');
+  toast('📥 CSV exported!');
+}
+function exportCompletedCSV(){
+  const month=document.getElementById('month-filter').value;
+  const rows=DB.filter(r=>r.status==='Completed'&&(!month||r.month===month));
+  const cols=[
+    {key:'toNum',label:'TO Number'},{key:'name',label:'Name'},{key:'dateRequested',label:'Date Requested'},
+    {key:'travelDates',label:'Date of Travel'},{key:'purpose',label:'Purpose'},{key:'place',label:'Destination'},{key:'notes',label:'File/Notes'}
+  ];
+  download(toCSV(rows,cols),'completed_travel_orders.csv');
+  toast('📥 Completed CSV exported!');
+}
+
+renderAdmin();
+</script>
+</body>
+</html>
